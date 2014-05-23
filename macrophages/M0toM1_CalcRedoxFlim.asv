@@ -101,8 +101,8 @@ for m = 1:listLength
     
     %% Calculate mean values
     CellArea(m) = sum(CellMask(:));
-    Mean755(m) = sum(sum(Int755.*CellMask));
-    Mean860(m) = sum(sum(Int860.*CellMask));
+    Mean755(m) = sum(sum(Int755.*CellMask)) / CellArea(m);
+    Mean860(m) = sum(sum(Int860.*CellMask)) / CellArea(m);
     MeanRedox(m) = Mean860(m)/(Mean755(m)+Mean860(m)) / CellArea(m);
     MeanTauM(m) = sum(sum(CellMask.*TauM)) / CellArea(m);
     MeanA1(m) = sum(sum(CellMask.*A1)) / CellArea(m);
@@ -119,7 +119,7 @@ for m = 1:listLength
         subplot(2,2,1);image(Flimage2); axis image off; title('\tau _m ');
         subplot(2,2,2);image(Redox2); axis image off; title('Redox ');
         subplot(2,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
-        colormap(gray(1024));
+        colormap(gray);
         subplot(2,2,4);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
 %          subplot(1,2,2);image(ind2rgb(CellMask,gray(2)));axis image; axis off; title(['CellMask ',fname]);
     end %if displayImages

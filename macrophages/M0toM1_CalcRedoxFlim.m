@@ -79,10 +79,14 @@ for m = 1:listLength
     %% Create intensity threshold mask
 %     Threshold(m) = 500;  %in photon counts per pixel
 %     tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
-    Threshold(m) = adaptiveThreshold(Int755);
+%     Threshold(m) = adaptiveThreshold(Int755);
+%     Threshold(m) = mean(Int755(Int755>Threshold(m)));
+    Threshold(m) = graythresh(Int755);
     Mask = Int755 > Threshold(m);
+    Threshold(m) = mean(Int755(Mask))*0.8;
+    CellMask = Int755 > Threshold(m);
 %     CellMask = (Intensity.*Mask > Threshold(m)*4) | (TauM.*Mask > 1300) ;
-    CellMask = medfilt2(Mask);
+%     CellMask = medfilt2(Mask);
     
 %     %% Remove nuclei by FLIM threshold
 %     [NuclearTauM(m),Ranks] = findNuclei3(TauM+~Mask*3000,800,2400);
@@ -96,13 +100,13 @@ for m = 1:listLength
     %% Segmented image
    Flimage2 = prettyFlim(TauM,Int755.*CellMask,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
    Redox2 = prettyRedox(Redox,(Int755+Int860).*CellMask,'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
-   Segments = uint8(CellMask);
+   Segments = uint8(CellMask)+uint8(Mask);
    cmp = [0 0 0; 1 0 0; 1 1 0];
     
     %% Calculate mean values
     CellArea(m) = sum(CellMask(:));
-    Mean755(m) = sum(sum(Int755.*CellMask));
-    Mean860(m) = sum(sum(Int860.*CellMask));
+    Mean755(m) = sum(sum(Int755.*CellMask)) / CellArea(m);
+    Mean860(m) = sum(sum(Int860.*CellMask)) / CellArea(m);
     MeanRedox(m) = Mean860(m)/(Mean755(m)+Mean860(m)) / CellArea(m);
     MeanTauM(m) = sum(sum(CellMask.*TauM)) / CellArea(m);
     MeanA1(m) = sum(sum(CellMask.*A1)) / CellArea(m);
@@ -119,7 +123,7 @@ for m = 1:listLength
         subplot(2,2,1);image(Flimage2); axis image off; title('\tau _m ');
         subplot(2,2,2);image(Redox2); axis image off; title('Redox ');
         subplot(2,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
-        colormap(gray(1024));
+        colormap(gray);
         subplot(2,2,4);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
 %          subplot(1,2,2);image(ind2rgb(CellMask,gray(2)));axis image; axis off; title(['CellMask ',fname]);
     end %if displayImages
@@ -128,7 +132,7 @@ for m = 1:listLength
     if saveImages
 %         imwrite(Flimage,['flim_',fname,'_',num2str(flimScaleMin),'-',num2str(flimScaleMax),'.tif']);  disp(['flim_',fname,'.tif',' saved.']);
         imwrite(Flimage2,['flim_',fname,'_',num2str(flimScaleMin),'-',num2str(flimScaleMax),'.tif']);  disp(['flim_',fname,'.tif',' saved.']);
-        imwrite(Redox2,['redox_',fname,'_',num2str(redoxBlue),'-',num2str(redoxRed),'.tif']);  disp(['redox',fname,'.tif',' saved.']);
+        imwrite(Redox2,['redox_',fname,'_',num2str(redoxBlue),'-',num2str(redoxRed),'.tif']);  disp(['redox_',fname,'.tif',' saved.']);
         imwrite(Segments,cmp,['segments_',fname,'.tif']);
         %imwrite(PrettyA1overA2,[fname,'_a1_a2.tif']);  disp([fname,'_a1_a2.tif saved']);
         %imwrite(PrettyA1,['a1_',fname,'.tif']);  disp(['a1_',fname,'.tif saved']);
@@ -138,18 +142,14 @@ for m = 1:listLength
 	fclose('all');
 end %for  m = 1:listLength
 
-% disp([cellType,'d',num2str(day),' MeanTauM ',num2str(mean(MeanTauM))]);
-% disp([cellType,' MeanTau1 ',num2str(mean(MeanTau1))]);
-% disp([cellType,' MeanTau2 ',num2str(mean(MeanTau2))]);
-
+%% Save summary of results
 if saveData
-    Header = {'cell','time','well','field','Redox','TauM','A1','Tau1','A2','Tau2','A1/A2','Tau2/Tau1','Int755','Int860','Threshold'};
-    DataPack = horzcat(MeanRedox,MeanTauM,MeanA1,MeanTau1,MeanA2,MeanTau2,MeanA1overA2,MeanTau2overTau1,Mean755,Mean860,Threshold');
+    Header = {'cell','time','well','field','Redox','TauM','A1','Tau1','A2','Tau2','A1/A2','Tau2/Tau1','Int755','Int860','Cell Area','Threshold'};
+    DataPack = horzcat(MeanRedox,MeanTauM,MeanA1,MeanTau1,MeanA2,MeanTau2,MeanA1overA2,MeanTau2overTau1,Mean755,Mean860,CellArea,Threshold);
     DataPack = horzcat(RunList(:,1:4),num2cell(DataPack));
     DataPack = vertcat(Header,DataPack);
     xlswrite(['RedoxFLIM_',dataGroup,'.xlsx'],DataPack);
     disp(['Mean values saved to ', 'RedoxFLIM_',dataGroup,'.xlsx']);
 end %if saveData
 
-fclose('all');
 disp('DONE!');
