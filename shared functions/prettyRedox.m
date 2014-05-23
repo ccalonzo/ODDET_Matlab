@@ -32,6 +32,32 @@ function [redox2,avgi2] = prettyRedox(redox,avgi,filename,lut,uplim,botlim,brigh
 % Improved stack handling. redox2 is now a 4-D array (R,G,B,slice); but at
 % the cost of much larger memory footprint.  Consider creating a 
 % save-to-file-only version of prettyRedox.
+%
+% 20140523 CAlonzo
+% Default is to not save image to file.
+% Automatically switch if specified scale limits are reversed
+
+%% Set default color map and corresponding normalization and offset
+if nargin < 8, bright = 0.99; end
+if nargin < 7, dark = 0.01; end
+if nargin < 6, botlim=min(redox(:)); end
+if nargin < 5, uplim=max(redox(:)); end
+if nargin < 4, lut = jet(64); end
+if nargin < 3, filename = 'none'; end
+bitScale = size(lut,1)-1;
+
+%% Correct reversed scales
+if uplim < botlim
+    temp = botlim;
+    botlim = uplim;
+    uplim = temp;
+end
+
+if bright < dark
+    temp = dark;
+    dark = bright;
+    bright = temp;
+end
 
 %% Iterate filename if file already exists
 k = 0;
@@ -43,17 +69,11 @@ end %exist([filename,'.tif']) == 2
 
 %% Take total intensity and rescale across 1st to 99th percentile.
 ImR=sort(reshape(nonzeros(avgi),1,[]),'descend'); 
-maxFlr=ImR(round(dark*length(ImR))); %pick up 99th percentile 
-minFlr=ImR(round(bright*length(ImR))); % and 1st values
+maxFlr=ImR(round((1-bright)*length(ImR))); %pick up 99th and first percentile 
+minFlr=ImR(round((1-dark)*length(ImR))); % lowest values
 avgi2=single((avgi-minFlr)/(maxFlr-minFlr)); %setting 1% to 0 and 99% to 1
 avgi2=avgi2.*(avgi2<1) + (avgi2>=1); %saturate top 1%
 avgi2=avgi2.*(avgi2>=0); %saturate bottom 1%
-
-%% Set default color map and corresponding normalization and offset
-if nargin < 6, botlim=0; end
-if nargin < 5, uplim=1; end
-if nargin < 4, lut = jet(64); end
-bitScale = size(lut,1)-1;
 
 %% Rescale redox map to bit scale
 redox=(redox-botlim)/(uplim-botlim);
