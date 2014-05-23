@@ -5,9 +5,9 @@ RunList = RunList(2:end,:);
 dataGroup = '20140508_M0toM1';
 
 %% Execution switches
-saveImages = true;
+saveImages = false;
 displayImages = true;
-saveData = true;
+saveData = false;
 
 %% Assign some constants for image rendering
 flimScaleMin = 1000;
@@ -81,12 +81,13 @@ for m = 1:listLength
 %     tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
 %     Threshold(m) = adaptiveThreshold(Int755);
 %     Threshold(m) = mean(Int755(Int755>Threshold(m)));
-    Threshold(m) = graythresh(Int755);
-    Mask = Int755 > Threshold(m);
+    Int755N = Int755 / max(Int755(:));
+    Threshold(m) = graythresh(Int755N);
+    Mask = Int755N > Threshold(m);
     Threshold(m) = mean(Int755(Mask))*0.8;
     CellMask = Int755 > Threshold(m);
 %     CellMask = (Intensity.*Mask > Threshold(m)*4) | (TauM.*Mask > 1300) ;
-%     CellMask = medfilt2(Mask);
+%      CellMask = Mask;
     
 %     %% Remove nuclei by FLIM threshold
 %     [NuclearTauM(m),Ranks] = findNuclei3(TauM+~Mask*3000,800,2400);
@@ -100,14 +101,14 @@ for m = 1:listLength
     %% Segmented image
    Flimage2 = prettyFlim(TauM,Int755.*CellMask,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
    Redox2 = prettyRedox(Redox,(Int755+Int860).*CellMask,'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
-   Segments = uint8(CellMask)+uint8(Mask);
-   cmp = [0 0 0; 1 0 0; 1 1 0];
+   Segments = 2*uint8(CellMask)+uint8(Mask);
+   cmp = [0 0 0; 1 0 0; 0 1 0; 1 1 0];
     
     %% Calculate mean values
     CellArea(m) = sum(CellMask(:));
     Mean755(m) = sum(sum(Int755.*CellMask)) / CellArea(m);
     Mean860(m) = sum(sum(Int860.*CellMask)) / CellArea(m);
-    MeanRedox(m) = Mean860(m)/(Mean755(m)+Mean860(m)) / CellArea(m);
+    MeanRedox(m) = Mean860(m)/(Mean755(m)+Mean860(m));
     MeanTauM(m) = sum(sum(CellMask.*TauM)) / CellArea(m);
     MeanA1(m) = sum(sum(CellMask.*A1)) / CellArea(m);
     MeanTau1(m) = sum(sum(CellMask.*Tau1)) / CellArea(m);
