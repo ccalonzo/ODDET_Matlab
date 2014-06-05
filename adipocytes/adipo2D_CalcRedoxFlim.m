@@ -5,7 +5,7 @@ RunList = RunList(2:end,:);
 dataGroup = '20140527_adipo2D';
 
 %% Execution switches
-saveImages = true;
+saveImages = false;
 displayImages = false;
 saveData = true;
 
@@ -69,7 +69,7 @@ for m = 1:listLength
 %     CellMask = Int755 > Threshold(m);
     
 %     CellMask = (Int755.*Mask > Threshold(m)*4) | (TauM.*Mask > 2000) ;
-     CellMask = Mask;
+%      CellMask = Mask;
     
 %     %% Remove nuclei by FLIM threshold
 %     [NuclearTauM(m),Ranks] = findNuclei3(TauM+~Mask*3000,800,2400);
@@ -87,7 +87,9 @@ for m = 1:listLength
     %% Redox ratio
     Redox = Int860 ./ (Int755 + Int860);
     Redox(isnan(Redox)) = 0; % set divide-by-zero to zero
-        
+
+    CellMask = Mask & (Redox > 0.35);
+    
     %% Fast to slow ratio
     A1overA2 = A1./A2;
     A1overA2(isnan(A1overA2)) = 0;  % set divide-by-zero to zero
@@ -109,7 +111,7 @@ for m = 1:listLength
    Flimage2 = prettyFlim(TauM,Int755,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
    Redox2 = prettyRedox(Redox,(Int755+Int860),'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
    Segments = 2*uint8(CellMask)+uint8(Mask);
-   cmp = [0 0 0; 1 0 0; 0 1 0; 1 1 0];
+   cmp = [0 0 0; 1 0 0; 0 .2 1; 0 0.2 1];
     
     %% Calculate mean values
     CellArea(m) = sum(CellMask(:));
