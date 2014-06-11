@@ -1,12 +1,12 @@
 %% Load metadata
-[~,~,RunList] = xlsread('20140527_adipo2D.xlsx');
+[~,~,RunList] = xlsread('20140609-adipo_t3.xlsx');
 InputHeader = RunList(1,:);
 RunList = RunList(2:end,:);
-dataGroup = '20140527_adipo2D';
+dataGroup = '20140610_adipo2D';
 
 %% Execution switches
-saveImages = false;
-displayImages = false;
+saveImages = true;
+displayImages = true;
 saveData = true;
 
 %% Assign some constants for image rendering
@@ -58,7 +58,7 @@ for m = 1:listLength
     %% Create intensity threshold mask
 %     Threshold(m) = 500;  %in photon counts per pixel
     tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
-    Threshold(m) = adaptiveThreshold(Int755+Int860);
+    Threshold(m) = adaptiveThreshold(Int755+Int860*2);
 %     Threshold(m) = mean(Int755(Int755>Threshold(m)));
     Mask = Int755 > Threshold(m);
 
@@ -88,7 +88,7 @@ for m = 1:listLength
     Redox = Int860 ./ (Int755 + Int860);
     Redox(isnan(Redox)) = 0; % set divide-by-zero to zero
 
-    CellMask = Mask & (Redox > 0.35);
+    CellMask = Mask;% & (Redox > 0.35);
     
     %% Fast to slow ratio
     A1overA2 = A1./A2;
