@@ -1,12 +1,12 @@
 %% Load metadata
-[~,~,RunList] = xlsread('20140527_adipo2D.xlsx');
+[~,~,RunList] = xlsread('20140609-adipo_t3.xlsx');
 InputHeader = RunList(1,:);
 RunList = RunList(2:end,:);
-dataGroup = '20140527_adipo2D';
+dataGroup = '20140610_adipo2D';
 
 %% Execution switches
-saveImages = true;
-displayImages = false;
+saveImages = false;
+displayImages = true;
 saveData = true;
 
 %% Assign some constants for image rendering
@@ -58,10 +58,11 @@ for m = 1:listLength
     %% Create intensity threshold mask
 %     Threshold(m) = 500;  %in photon counts per pixel
     tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
-    Threshold(m) = adaptiveThreshold(Int755+Int860);
-%     Threshold(m) = mean(Int755(Int755>Threshold(m)));
-    Mask = Int755 > Threshold(m);
-
+    Threshold(m) = adaptiveThreshold(Int860);
+    CellMask = (Int860) > Threshold(m);
+    Threshold(m) = adaptiveThreshold(Int755);
+    Mask = (Int755) > Threshold(m);
+    
 %     Int755N = Int755 / max(Int755(:));
 %     Threshold(m) = graythresh(Int755N);
 %     Mask = Int755N > Threshold(m);
@@ -88,7 +89,7 @@ for m = 1:listLength
     Redox = Int860 ./ (Int755 + Int860);
     Redox(isnan(Redox)) = 0; % set divide-by-zero to zero
 
-    CellMask = Mask & (Redox > 0.35);
+%     CellMask = Mask;% & (Redox > 0.35);
     
     %% Fast to slow ratio
     A1overA2 = A1./A2;
@@ -111,7 +112,7 @@ for m = 1:listLength
    Flimage2 = prettyFlim(TauM,Int755,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
    Redox2 = prettyRedox(Redox,(Int755+Int860),'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
    Segments = 2*uint8(CellMask)+uint8(Mask);
-   cmp = [0 0 0; 1 0 0; 0 .2 1; 0 0.2 1];
+   cmp = [0 0 0; 1 0 0; 0 .2 1; 0.5 0.2 1];
     
     %% Calculate mean values
     CellArea(m) = sum(CellMask(:));
