@@ -5,16 +5,14 @@ function NewMask = antiSmall(Mask,minDiameter,connectivity)
 % Replace bwlabel() with bwconncomp() for more efficient memory handling.
 % 07Aug2013 CAlonzo
 % Use regionprops to calculate areas
-%
-% 12Jun2014 CAlonzo
-% default to 4 neareast neighbors, but allow user to specify otherwise
+% 
 
 if nargin < 3
-    connectivity = 4;
+    connectivity = 8;
 end
 
 %%
-CC = bwconncomp(Mask,connectivity); %Identify individual objects
+CC = bwconncomp(Mask,4); %Identify individual objects
 Stats = regionprops(CC,'EquivDiameter'); %Calculate equivalent diameter of each object
 Keep = find([Stats.EquivDiameter] > minDiameter); %Find objects smaller than minDiameter
 NewMask = ismember(labelmatrix(CC), Keep);

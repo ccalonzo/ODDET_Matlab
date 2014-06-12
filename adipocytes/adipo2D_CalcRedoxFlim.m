@@ -7,7 +7,7 @@ dataGroup = '20140610_adipo2D';
 %% Execution switches
 saveImages = false;
 displayImages = true;
-saveData = true;
+saveData = false;
 
 %% Assign some constants for image rendering
 flimScaleMin = 500;
@@ -23,7 +23,8 @@ redoxBlue = 0.0;
 %% Intialize array containers for output
 listLength = size(RunList,1);
 
-Threshold = zeros(listLength,1); %Intensity threshold for NADH channel
+NADHThreshold = zeros(listLength,1); %Intensity threshold for NADH channel
+FADThreshold = zeros(listLength,1); %Intensity threshold for FAD channel
 CellArea = zeros(listLength,1);
 MeanRedox = zeros(listLength,1);
 Mean755 = zeros(listLength,1);
@@ -58,28 +59,16 @@ for m = 1:listLength
     %% Create intensity threshold mask
 %     Threshold(m) = 500;  %in photon counts per pixel
     tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
-    Threshold(m) = adaptiveThreshold(Int860);
-    CellMask = (Int860) > Threshold(m);
-    Threshold(m) = adaptiveThreshold(Int755);
-    Mask = (Int755) > Threshold(m);
+    FADThreshold(m) = adaptiveThreshold(Int860);
+    FADMask = (Int860) > FADThreshold(m);
+    NADHThreshold(m) = adaptiveThreshold(Int755);
+    NADHMask = (Int755) > NADHThreshold(m);
+    CellMask = antiSmall(NADHMask & FADMask, 10);
+    LipidMask = NADHMask & ~FADMask;
     
-%     Int755N = Int755 / max(Int755(:));
-%     Threshold(m) = graythresh(Int755N);
-%     Mask = Int755N > Threshold(m);
-%     Threshold(m) = mean(Int755(Mask))*0.8;
-%     CellMask = Int755 > Threshold(m);
-    
-%     CellMask = (Int755.*Mask > Threshold(m)*4) | (TauM.*Mask > 2000) ;
-%      CellMask = Mask;
-    
-%     %% Remove nuclei by FLIM threshold
-%     [NuclearTauM(m),Ranks] = findNuclei3(TauM+~Mask*3000,800,2400);
-%     CellMask = Mask & (TauM > NuclearTauM(m));
-    
-%     %% Remove resdiual nuclei with a combined TauM and Intensity threshold
-%     NuclearBits = (TauM < NuclearTauM(m)*1.2)&(Intensity < Threshold(m)*1.5);
-%     CellMask = CellMask & ~NuclearBits;
-%     CellMask = medfilt2(CellMask);
+    %% Label cells
+    CC = bwconncomp(CellMask);
+    CellLabels = labelmatrix(CC);
     
     %% Normalize by laser power
     Int755 = Int755/power755^2;
@@ -89,7 +78,7 @@ for m = 1:listLength
     Redox = Int860 ./ (Int755 + Int860);
     Redox(isnan(Redox)) = 0; % set divide-by-zero to zero
 
-%     CellMask = Mask;% & (Redox > 0.35);
+%     CellMask = Redox > 0.35);
     
     %% Fast to slow ratio
     A1overA2 = A1./A2;
@@ -111,8 +100,9 @@ for m = 1:listLength
     %% Segmented image
    Flimage2 = prettyFlim(TauM,Int755,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
    Redox2 = prettyRedox(Redox,(Int755+Int860),'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
-   Segments = 2*uint8(CellMask)+uint8(Mask);
-   cmp = [0 0 0; 1 0 0; 0 .2 1; 0.5 0.2 1];
+%    Segments = uint8(CellMask)+uint8(2*LipidMask);
+   Segments = uint8(CellMask);
+   cmp = [0 0 0; 0.8 0.8 0; 0 0.2 1; 0.5 0.2 1];
     
     %% Calculate mean values
     CellArea(m) = sum(CellMask(:));
@@ -130,13 +120,14 @@ for m = 1:listLength
     %% Display Images
     if displayImages
         %figure('Name',fname,'Position',[2400,200,600,600]);
-        figure('Name',fname);%,'Position',[2000,50,600,600]);
-        subplot(2,2,1);image(Flimage2); axis image off; title('\tau _m ');
-        subplot(2,2,2);image(Redox2); axis image off; title('Redox ');
-        subplot(2,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
+        figure('Name',fname);
+        subplot(3,2,1);image(Flimage2); axis image off; title('\tau _m ');
+        subplot(3,2,2);image(Redox2); axis image off; title('Redox ');
+        subplot(3,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
+        subplot(3,2,4);imagesc(Int860); axis image off; title('FAD Intensity');
         colormap(gray);
-        subplot(2,2,4);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
-%          subplot(1,2,2);image(ind2rgb(CellMask,gray(2)));axis image; axis off; title(['CellMask ',fname]);
+        subplot(3,2,5);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
+        subplot(3,2,6);imagesc(CellLabels);axis image; axis off; title('Cells');
     end %if displayImages
 
     %% Save Images
@@ -155,8 +146,8 @@ end %for  m = 1:listLength
 
 %% Save summary of results
 if saveData
-    Header = {'cell','time','well','field','Redox','TauM','A1','Tau1','A2','Tau2','A1/A2','Tau2/Tau1','Int755','Int860','Cell Area','Threshold'};
-    DataPack = horzcat(MeanRedox,MeanTauM,MeanA1,MeanTau1,MeanA2,MeanTau2,MeanA1overA2,MeanTau2overTau1,Mean755,Mean860,CellArea,Threshold);
+    Header = {'cell','time','well','field','Redox','TauM','A1','Tau1','A2','Tau2','A1/A2','Tau2/Tau1','Int755','Int860','Cell Area','NADHThreshold','FADTHreshold'};
+    DataPack = horzcat(MeanRedox,MeanTauM,MeanA1,MeanTau1,MeanA2,MeanTau2,MeanA1overA2,MeanTau2overTau1,Mean755,Mean860,CellArea,NADHThreshold,FADThreshold);
     DataPack = horzcat(RunList(:,1:4),num2cell(DataPack));
     DataPack = vertcat(Header,DataPack);
     xlswrite(['RedoxFLIM_',dataGroup,'.xlsx'],DataPack);
