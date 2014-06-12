@@ -1,4 +1,4 @@
-function Grey = prettyGrey(Intensity,dark,bright)
+function Gray= prettyGrey(Intensity,dark,bright)
 % prettyGrey rescales and saturates a singe image channel.
 % Specify dark and bright saturation points as percentiles from 0 to 1,
 % i.e. 99 percentile = 0.99.

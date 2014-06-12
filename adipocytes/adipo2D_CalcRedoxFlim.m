@@ -19,7 +19,6 @@ redoxDark = 0.05;
 redoxRed = 0.8;
 redoxBlue = 0.0;
 
-
 %% Intialize array containers for output
 listLength = size(RunList,1);
 
@@ -121,13 +120,13 @@ for m = 1:listLength
     if displayImages
         %figure('Name',fname,'Position',[2400,200,600,600]);
         figure('Name',fname);
-        subplot(3,2,1);image(Flimage2); axis image off; title('\tau _m ');
-        subplot(3,2,2);image(Redox2); axis image off; title('Redox ');
-        subplot(3,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
-        subplot(3,2,4);imagesc(Int860); axis image off; title('FAD Intensity');
-        colormap(gray);
-        subplot(3,2,5);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
-        subplot(3,2,6);imagesc(CellLabels);axis image; axis off; title('Cells');
+        subplot(2,2,1);image(Flimage2); axis image off; title('\tau _m ');
+        subplot(2,2,2);image(Redox2); axis image off; title('Redox ');
+        subplot(2,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
+%         subplot(3,2,4);imagesc(Int860); axis image off; title('FAD Intensity');
+%         colormap(gray);
+        subplot(2,2,4);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
+%         subplot(3,2,6);imagesc(CellLabels);axis image; axis off; title('Cells');
     end %if displayImages
 
     %% Save Images
