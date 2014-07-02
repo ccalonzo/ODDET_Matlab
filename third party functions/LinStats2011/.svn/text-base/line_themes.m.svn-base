@@ -1,0 +1,92 @@
+function [ph lh] = line_themes(h,g,varargin)
+%LINE_THEMES adds markers and colors to lines in the current axes
+% 
+%
+%usage:
+% line_themes      - finds and colors the lines
+% line_themes(h,g) - colors the lines given by handles h and colors
+%      them groups in g
+% line_themes(h,g,varargin)
+%
+% OPTIONS:
+%       marker  = 'osdv^<>ph' 
+%       linestyle = {'-', '-.', ':', '--'}; can be 'none'
+%       facecolor = colorfulcube(p);, can be []
+%       linecolor  = .5*colorfulcube(p); can be []
+%       legend   {on|off}
+%[ph lh] = line_themes(h,g,varargin)
+%   returns handles to the plot and the legend
+
+if nargin == 0
+        h = findobj(gca,'type', 'line');
+end
+
+if nargin == 1 || isempty(g)
+    p = length(h);
+    gj = (1:p)';
+    gi = gj;
+else
+    [gn gi gj] = unique(g);
+    p = length(gn);
+end
+
+P = inputParser;
+P.addParamValue( 'marker', 'osdv^<>ph', @ischar );
+P.addParamValue( 'linestyle', {'-', '-.', ':', '--'}, @(x) (iscellstr(x)||ischar(x)) );
+P.addParamValue( 'facecolor', colorfulcube(p) );
+P.addParamValue( 'linecolor', .5*colorfulcube(p) );
+P.addParamValue( 'legend', 'off', @(x) ismember( x, {'on', 'off'}) );
+P.parse(varargin{:});
+
+
+m = P.Results.marker;
+if strcmp(m,'none');
+    m = 'none';
+    maxm = 1;
+else
+    m = m(:);
+    maxm = length(m);    
+end
+
+mc = P.Results.facecolor; maxmc = size(mc,1);
+lc = P.Results.linecolor; maxlc = size(lc,1);
+ls = P.Results.linestyle;
+
+if ischar(ls)
+    ls = {ls};
+end
+maxl = length(ls);
+
+
+for i = 1:p
+    
+    j = 1+mod(i-1,maxm);
+    k = 1+mod(i-1,maxl);
+    l = 1+mod(i-1,maxmc);
+    lci = 1+mod(i-1,maxlc);
+
+    hh = h(gj==i);
+    if ~isempty( m )
+        set(hh, 'marker', m(j,:) );
+    end
+    
+    if ~isempty( mc )
+      set(hh, 'markerfacecolor', mc(l,:));
+    end
+    
+    if ~isempty( lc )
+        set(hh, 'color', lc(lci,:) );
+    end
+    
+    if ~isempty( ls )
+        set(hh, 'linestyle', ls{k} );
+    end
+end
+
+ph = h(gi);
+if strcmp(P.Results.legend, 'on')
+    if isnumeric(gn)
+        gn = num2str(gn);
+    end
+    lh = legend( h(gi), gn );
+end

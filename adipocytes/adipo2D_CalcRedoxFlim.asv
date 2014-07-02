@@ -6,8 +6,8 @@ dataGroup = '20140610_adipo2D';
 
 %% Execution switches
 saveImages = false;
-displayImages = true;
-saveData = false;
+displayImages = false;
+saveData = true;
 
 %% Assign some constants for image rendering
 flimScaleMin = 500;
@@ -65,10 +65,10 @@ for m = 1:listLength
     CellMask = antiSmall(NADHMask & FADMask, 10);
     LipidMask = NADHMask & ~FADMask;
     
-    %% Label cells
-    CC = bwconncomp(CellMask);
-    CellLabels = labelmatrix(CC);
-    
+%     %% Label cells
+%     CC = bwconncomp(CellMask);
+%     CellLabels = labelmatrix(CC);
+%     
     %% Normalize by laser power
     Int755 = Int755/power755^2;
     Int860 = Int860/power860^2;    
@@ -97,11 +97,13 @@ for m = 1:listLength
     
     
     %% Segmented image
-   Flimage2 = prettyFlim(TauM,Int755,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
-   Redox2 = prettyRedox(Redox,(Int755+Int860),'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
-%    Segments = uint8(CellMask)+uint8(2*LipidMask);
-   Segments = uint8(CellMask);
-   cmp = [0 0 0; 0.8 0.8 0; 0 0.2 1; 0.5 0.2 1];
+    if displayImages||saveImages
+        Flimage2 = prettyFlim(TauM,Int755,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
+        Redox2 = prettyRedox(Redox,(Int755+Int860),'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
+%         Segments = uint8(CellMask)+uint8(2*LipidMask);
+        Segments = uint8(CellMask);
+        cmp = [0 0 0; 0.8 0.8 0; 0 0.2 1; 0.5 0.2 1];
+    end %if displayImages||saveImages
     
     %% Calculate mean values
     CellArea(m) = sum(CellMask(:));
@@ -120,13 +122,13 @@ for m = 1:listLength
     if displayImages
         %figure('Name',fname,'Position',[2400,200,600,600]);
         figure('Name',fname);
-        subplot(3,2,1);image(Flimage2); axis image off; title('\tau _m ');
-        subplot(3,2,2);image(Redox2); axis image off; title('Redox ');
-        subplot(3,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
-        subplot(3,2,4);imagesc(Int860); axis image off; title('FAD Intensity');
-        colormap(gray);
-        subplot(3,2,5);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
-        subplot(3,2,6);imagesc(CellLabels);axis image; axis off; title('Cells');
+        subplot(2,2,1);image(Flimage2); axis image off; title('\tau _m ');
+        subplot(2,2,2);image(Redox2); axis image off; title('Redox ');
+        subplot(2,2,3);imagesc(Int755); axis image off; title('NADH Intensity');
+%         subplot(3,2,4);imagesc(Int860); axis image off; title('FAD Intensity');
+%         colormap(gray);
+        subplot(2,2,4);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
+%         subplot(3,2,6);imagesc(CellLabels);axis image; axis off; title('Cells');
     end %if displayImages
 
     %% Save Images
@@ -140,7 +142,6 @@ for m = 1:listLength
 %         imwrite(real(CellMask),['mask_',fname,'_',num2str(tweak),'.tif']); disp(['mask_',fname,'.tif',' saved.']);
     end %if saveImages
     
-	fclose('all');
 end %for  m = 1:listLength
 
 %% Save summary of results

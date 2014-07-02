@@ -1,0 +1,144 @@
+function [h u] = grpplot( x, y, varargin)
+% [h u ] = grpplot( x, y, varargin)
+% h is a vector of handles to all points of smallest group
+% u is a matrix of how the handles are grouped. There are k columns, one
+% for each factor. use each column in a call to line_themes to set the
+% properties for each level of that fator
+%        load carbig
+%        X = [MPG Acceleration Weight Displacement];
+%        i = ~any(isnan(X),2);  %find present values
+%        X = zscore(X(i,:));
+%        [coeff, score, latent] = princomp( X );
+%        cylinders = Cylinders(i,:);
+%        origin    = Origin(i,:);
+%        grpplot( score(:,1), score(:,2), cylinders, origin )
+
+newplot;
+if nargin < 3
+    u = [];
+    h = line( x, y, 'marker', 'd', 'linestyle', 'none', 'markersize', 5 );
+    return;
+end
+names = cell(length(varargin),1);
+for i = 1:length(names);
+    nm = inputname(2+i);
+    if isempty(nm) 
+        nm = sprintf( 'x%d', i');
+    end
+    names{i} = nm;
+end
+if isa(varargin{1}, 'Vars')
+    v = varargin{1};
+    ai = v.x;
+    an = getLevelNames(v);
+else
+    [ai an] = grp2ind( varargin{:} );
+end
+
+[u i j] = unique(ai,'rows');
+if size(ai,1) ~= size(x,1)
+    error('linstats:grpplot:IncompatibleSize', 'grouping variables are not the same size as the x');
+end
+if size(ai,2) == 1
+    an = {an};
+end
+
+u = ind2grp( u, an{:} );
+
+% if isvector(x)
+%     x = x(:);
+%     if size(y,2) > 1
+%         x = repmat(x,size(y,2));
+%     end
+% end
+
+if size(x,1) ~= size(y,1)
+    error( 'linstats:grpplot:InvalidArguments', 'Vectors must be the same lengths');
+end
+
+for k = 1:length(i)
+    a = j==k;
+    h(:,k) = line( x(a,:), y(a,:), 'marker', '.', 'linestyle', 'none' );
+end
+
+grps.h = h;
+grps.x = Vars( u{:}, 'anno', names );
+set(gcf,'userdata', grps );
+
+userdata = { 'gscatter', x, y, grps };
+set(gca, 'userdata', userdata );
+
+createAttributeMenus(gca, grps.x)
+
+% line_themes(h, [], 'linestyle', 'none' );
+end
+
+
+function createAttributeMenus( v,x )
+if  isempty(get(v,'UIContextMenu')) || ~ishandle( get(v, 'UIContextMenu') )
+    amenu = uicontextmenu;
+    set(amenu,'tag', 'AttributeContextMenu');
+    bmenu = uimenu( amenu, 'label', 'fill color' );
+    createGroupMenus(bmenu, x, @fillgrp );
+    bmenu = uimenu( amenu, 'label', 'shape' );
+    createGroupMenus(bmenu,  x,  @markergrp );
+    bmenu = uimenu( amenu, 'label', 'line style');
+    createGroupMenus(bmenu, x, @linestylegrp );
+    bmenu = uimenu( amenu, 'label', 'line color'); 
+    createGroupMenus(bmenu, x, @linecolorgrp );
+    bmenu = uimenu( amenu, 'label', 'size');
+    createGroupMenus(bmenu, x, @sizegrp );
+    bmenu = uimenu( amenu, 'label', 'legend','callback', @mlegend);
+    set(v, 'UIContextMenu', amenu);
+end
+
+end
+
+function createGroupMenus( amenu, v, cb )
+
+n = cellstr(v.anno(:,1));
+for i = 1:size(v,2)
+     uimenu( amenu, 'label', n{i}, 'callback', cb );
+end
+end
+
+function mlegend(h,e)
+    a = get(gca, 'userdata');
+    v = a{4};
+    c = var2cell(v.x);
+    multi_legend( a{4}.h', c, 'name', v.x.anno.varname );
+end
+
+function h = fillgrp(hObject, eventdata)
+    pos = get(hObject,'pos');
+    a = get(gca, 'userdata');
+    v = a{4}.x;
+    color_themes( a{4}.h, v.x(:,pos) );
+end
+
+function h = markergrp(hObject, eventdata)
+    pos = get(hObject,'pos');
+    a = get(gca, 'userdata');
+    v = a{4}.x;
+    shape_themes( a{4}.h, v.x(:,pos) );
+end
+
+function h = linestylegrp(hObject, eventdata)
+    pos = get(hObject,'pos');
+    a = get(gca, 'userdata');
+    v = a{4}.x;
+    line_themes( a{4}.h, v.x(:,pos) );
+end
+
+function h = linecolorgrp(hObject, eventdata)
+end
+
+function h = sizegrp(hObject, eventdata)
+    pos = get(hObject,'pos');
+    a = get(gca, 'userdata');
+    v = a{4}.x;
+    size_themes( a{4}.h, v.x(:,pos) );
+end
+
+
+

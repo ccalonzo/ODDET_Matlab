@@ -1,0 +1,97 @@
+function leg_h = multi_legend(h,u, varargin)
+%ax = multi_legend(h,u, varargin) creates a legend that associate multiple
+%factors with marker color, shape and sizes
+% TODO: use 'linkprop' to link color, shape etc of hidden objects to the
+% visible objects they are meant to represent
+%
+% h is handle to lines
+% u is a vector of level_names for each factor
+% options
+%       name - cellstr of factor names default('color', 'shape', 'size')
+%       color - colors of legend section headers
+
+ip = inputParser;
+ip.addParamValue( 'name', {'Color','Shape','Size'}' );
+ip.addParamValue( 'color', [1 1 1] );
+ip.parse(varargin{:});
+
+fn = ip.Results.name;
+sectionHeaderColor = ip.Results.color;
+
+cur_ax    = gca;
+cur_pos = get(cur_ax,'pos');
+
+%% number of elements in legend
+p = zeros(3,1);
+for i = 1:length(u);
+    p(i) = length(unique(u{i}));
+end;
+
+%% create legend axis
+leg_ax = findobj( cur_ax, 'tag', 'multi_legend');
+delete(leg_ax);
+
+
+%% handle single legend
+if length(u) == 1
+    [un uloc] = unique( u{1} );
+    leg_h = legend(  h(uloc), un );
+    return
+end
+
+%% COLOR Section -
+% items to be represented by colored patches matching the
+% corresponding markerfacecolor 
+
+c = cell2mat(get( h, 'markerfacecolor' ));
+[un uloc] = unique( u{1} );
+
+leg_text = un;
+ph = zeros(p(1),1);
+for i = 1:p(1)
+    k = uloc(i);
+    cc = c(k,:);
+    lc = .5*cc;
+    ph(i)  = patch( zeros(1,4), zeros(1,4), ...
+        cc, 'edgecolor', lc );
+end
+grp_h    = ph;
+%% setup shape legend
+if p(2) > 0
+    c = get( h, 'marker' );
+    [un uloc umap] = unique( u{2} );
+    lh = zeros(p(2),1);
+    for i = 1:p(2)
+        k = uloc(i);
+        lh(i) = line( 0,0, 'marker', char(c(k)), 'markerfacecolor', 'k', 'color', 'k' );
+    end
+    leg_text = [leg_text;un];
+    grp_h = [grp_h;lh];
+end
+
+%% setup size legend
+if p(3) > 0
+    
+    c = cell2mat(get( h, 'markersize' ));
+    [un uloc] = unique( u{3} );
+    sh = zeros(p(3),1);
+    for i = 1:p(3)
+        k = uloc(i);    
+        sh(i) = line( 0,0, 'marker', 's', ...
+            'markersize', c(k), ...
+            'markerfacecolor', 'none', 'color', 'k', ...
+            'linestyle', 'none' );
+    end
+    leg_text = [leg_text;un];
+    grp_h = [grp_h; sh];
+end
+
+%% create legend
+
+leg_h = legend( grp_h, leg_text,'interpreter', get(0,'defaulttextinterpreter')  );
+set( grp_h, 'visible', 'off');
+set( leg_ax, 'visible', 'off');
+
+
+%% set position of parent
+axes(cur_ax);

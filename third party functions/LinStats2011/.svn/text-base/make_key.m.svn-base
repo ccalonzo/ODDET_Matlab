@@ -1,0 +1,24 @@
+function [key gi gn] = make_key( varargin )
+%MAKE_KEY - concatenate two vectors to produce a composite key separated by
+%a specified character (i.e. delimiter)
+%         
+%
+%
+% usage
+%  [key gi gn] = make_two_part_key( k1, k2, 'delim', delim )
+%       returns KEY, a cellstr containing a key formed by concatenating k1
+%       and k2
+%       K1 and K2 are vectors or cellstrs
+%       gi and gi are returns from grp2ind
+%
+% see also grp2ind
+
+arg = ArgParser(varargin{:});
+delim = value( arg, 'delim', '_');
+[gi gn] = grp2ind( arg.args{:} );
+
+
+key =gn{1}(gi(:,1));
+for i = 2:size(gi,2)
+    key = strcat( key, delim, gn{i}(gi(:,i)));
+end

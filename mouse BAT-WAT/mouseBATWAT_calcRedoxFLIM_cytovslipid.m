@@ -1,8 +1,9 @@
 %% Load metadata
-[~,~,RunList] = xlsread('sevi_mouse_BAT-WAT.xlsx');
+[~,~,RunList] = xlsread('sevi_mouse_BAT-WAT_compare.xlsx');
+% [~,~,RunList] = xlsread('20140624-kosub2.xlsx');
 InputHeader = RunList(1,:);
 RunList = RunList(2:end,:);
-dataGroup = '20140611_mousebatwat-all';
+dataGroup = '20140625_twk1.5';
 
 %% Execution switches
 saveImages = true;
@@ -10,8 +11,8 @@ displayImages = false;
 saveData = false;
 
 %% Assign some constants for image rendering
-flimScaleMin = 1000;
-flimScaleMax = 2500;
+flimScaleMin = 100;
+flimScaleMax = 5000;
 flimScaleMin_F = 1000;
 flimScaleMax_F = 2500;
 bright = 0.90;
@@ -20,7 +21,7 @@ bright_F = 0.95;
 dark_F = 0.05;
 redoxBright = 0.95;
 redoxDark = 0.05;
-redoxRed = 0.8;
+redoxRed = 1.0;
 redoxBlue = 0.0;
 
 %% Intialize array containers for output
@@ -29,6 +30,12 @@ listLength = size(RunList,1);
 NADHThreshold = zeros(listLength,1);
 FADThreshold = zeros(listLength,1);
 SHGThreshold = zeros(listLength,1);
+
+CellArea = zeros(listLength,1);
+LipidArea = zeros(listLength,1);
+Mean755 = zeros(listLength,1);
+Mean755_L = zeros(listLength,1);
+Mean860 = zeros(listLength,1);
 MeanRedox = zeros(listLength,1);
 MeanTauM = zeros(listLength,1);
 MeanA1 = zeros(listLength,1);
@@ -46,13 +53,13 @@ MeanTau2overTau1 = zeros(listLength,1);
 % MeanA1overA2_F = zeros(listLength,1);
 % MeanTau2overTau1_F = zeros(listLength,1);
 % 
-% MeanTauM_L = zeros(listLength,1);
-% MeanA1_L = zeros(listLength,1);
-% MeanTau1_L = zeros(listLength,1);
-% MeanA2_L = zeros(listLength,1);
-% MeanTau2_L = zeros(listLength,1);
-% MeanA1overA2_L = zeros(listLength,1);
-% MeanTau2overTau1_L = zeros(listLength,1);
+MeanTauM_L = zeros(listLength,1);
+MeanA1_L = zeros(listLength,1);
+MeanTau1_L = zeros(listLength,1);
+MeanA2_L = zeros(listLength,1);
+MeanTau2_L = zeros(listLength,1);
+MeanA1overA2_L = zeros(listLength,1);
+MeanTau2overTau1_L = zeros(listLength,1);
 
 
 % wtbat-31 m = 13;
@@ -63,16 +70,16 @@ MeanTau2overTau1 = zeros(listLength,1);
 %%Iterate through RunList
 for m = 1:listLength
 % Extract labels from RunList
-    tissueType = RunList{m,1};
-    treatment = RunList{m,2};
-    slide = RunList{m,3};
+    mouse = RunList{m,1};
+    tissue = RunList{m,2};
+    sample = RunList{m,3};
     field = RunList{m,4};
     power755 = RunList{m,5};
     power860 = RunList{m,6};
     power900 = RunList{m,7};
     
     %% Load image files
-    fname = [tissueType,treatment,'-',num2str(slide),num2str(field)];
+    fname = [mouse,tissue,'-',num2str(sample),num2str(field)];
     [Int755,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults([fname,'_ex755']);
     [Int860,TauM_F,A1_F,A2_F,Tau1_F,Tau2_F] = loadFlimFitResults([fname,'_ex860']);
     Int900 = loadFlimFitResults([fname,'_ex900']);
@@ -81,22 +88,25 @@ for m = 1:listLength
 %     [Int860] = CoRegisterNormxcorr2(Int755,Int860);
 %     [Int900] = CoRegisterNormxcorr2(Int860,Int900);
 
-    %% Create intensity threshold mask
-    tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
-    NADHThreshold(m) = adaptiveThreshold(Int755);
-    NADHMask = (Int755) > NADHThreshold(m);
-    FADThreshold(m) = adaptiveThreshold(Int860);
-    FADMask = (Int860) > FADThreshold(m);
-    SHGThreshold(m) = adaptiveThreshold(Int900);
-    SHGMask = (Int900) > SHGThreshold(m);
-
-    CellMask = antiSmall(NADHMask & FADMask, 10);
-    LipidMask = NADHMask & ~FADMask;
-
     %% Normalize by laser power
     Int755 = Int755/power755^2;
     Int860 = Int860/power860^2;    
     Int900 = Int900/power900^2;    
+
+    %% Create intensity threshold mask
+    tweak = 1.5; %tweak threshold to include more(<1) or less(>1) pixels.
+    NADHThreshold(m) = adaptiveThreshold(Int755);
+    NADHMask = (Int755) > NADHThreshold(m);
+    FADThreshold(m) = adaptiveThreshold(Int860);
+    FADMask = (Int860) > FADThreshold(m)*tweak;
+    SHGThreshold(m) = 0.15;
+    SHGMask = (Int900) > SHGThreshold(m);
+%     if strcmp(mouse,'wtbat')
+%         CellMask = antiSmall(FADMask & NADHMask, 10);
+%     else
+        CellMask = antiSmall(FADMask, 10) & ~SHGMask;
+%     end
+    LipidMask = NADHMask & ~FADMask;
     
     %% Redox ratio
     Redox = Int860 ./ (Int755 + Int860);
@@ -123,13 +133,13 @@ for m = 1:listLength
             redoxRed,redoxBlue,redoxBright,redoxDark);
         Pretty755 = prettyGray(Int755,bright,dark);
         Pretty860 = prettyGray(Int860,bright,dark);
-        Pretty900 = prettyGray(Int900,bright,dark);
+        Pretty900 = Int900;%prettyGray(Int900,bright,dark);
 %         PrettyA1overA2 = prettyFlim(A1overA2,Intensity,'none',flipud(jet(64)),4,1); %scale A1/A2 ration from 1 to 4.
 %         PrettyA1 = prettyFlim(A1,Intensity,'none',flipud(jet(64)),1,0); %scale from 0 to 1.
     % Segmented image
 %         Flimage2 = prettyFlim(TauM,Intensity.*CellMask,'none',flipud(jet(64)),FlimScaleMax,FlimScaleMin);
-        Segments = (2*uint8(LipidMask) + uint8(CellMask));
-        cmp = [0 0 0; 0.8 0.8 0; 0 0.2 1; 0.8 0.8 0.8];
+        Segments = (3*uint8(SHGMask) + 2*uint8(LipidMask) + uint8(CellMask));
+        cmp = [0 0 0; 0.8 0.8 0; 0 0.2 1; 1 0 0];
     % Resize images for better viewing 
         Flimage755 = imresize(Flimage755,2,'bilinear');
         Flimage860 = imresize(Flimage860,2,'bilinear');
@@ -138,23 +148,26 @@ for m = 1:listLength
         Pretty860 = imresize(Pretty860,2,'bilinear');
         Pretty900 = imresize(Pretty900,2,'bilinear');
         Overlay = cat(3,Pretty860,Pretty755,Pretty900);      
-%         Segments = imresize(Segments,2,'nearest');
+        Segments = imresize(Segments,2,'nearest');
      % Collage
         PrettyCollage = collage2x2(Overlay,Redox2,Flimage755,Flimage860,2);
-        GrayCollage = collage1x3(Pretty755,Pretty860,Pretty900,2);
+%         GrayCollage = collage1x3(Pretty755,Pretty860,Pretty900,2);
+        GrayCollage = collage2x2(Pretty755,Pretty860,Pretty900,ind2rgb(Segments,cmp),2);
+
     end %if displayImages||saveImages
     
     %% Display Images
     if displayImages
         %figure('Name',fname,'Position',[2400,200,600,600]);
-        figure('Name',fname);%,'Position',[2000,50,600,600]);
-        image(PrettyCollage); axis image off;
+%         figure('Name',fname);%,'Position',[2000,50,600,600]);
+%         image(PrettyCollage); axis image off;
         figure('Name',fname);
-        subplot(1,2,1); image(GrayCollage); axis image off;        
-        subplot(1,2,2); image(ind2rgb(Segments,cmp));axis image off; 
-%         subplot(2,2,1);image(Flimage755); axis image off; title('NADH \tau _m');
+%         subplot(1,2,2); image(GrayCollage); axis image off;        
+%         subplot(1,2,1); image(PrettyCollage); axis image off;        
+%         subplot(1,2,2); image(ind2rgb(Segments,cmp));axis image off; 
+        subplot(1,2,1);image(Flimage755); axis image off; title('NADH \tau _m');
 %         subplot(2,2,2);image(Flimage860); axis image off; title('FAD \tau _m');
-%         subplot(2,2,3);image(Redox2); axis image off; title('Redox');
+        subplot(1,2,2);image(Redox2); axis image off; title('Redox');
 %         subplot(2,2,4);image(Overlay); axis image off; title('TPEF+SHG'); 
 %         subplot(2,2,3);imagesc(Pretty860); axis image off; title('FAD Intensity'); colormap(gray);
 %         subplot(2,2,4);imagesc(Pretty900); axis image off; title('SHG Intensity'); colormap(gray);
@@ -163,36 +176,41 @@ for m = 1:listLength
 
     %% Save Images
     if saveImages
-        fname = [tissueType,treatment,'-',num2str(slide),num2str(field)];
-        imwrite(PrettyCollage,['colors_',fname,'.tif']);
-        imwrite(GrayCollage,['grays_',fname,'.tif']); 
-        disp([fname,' images saved.']);
-%         imwrite(Flimage755,['flim755_',fname,'_',num2str(FlimScaleMin),'-',num2str(FlimScaleMax),'.tif']);  
+%         imwrite(PrettyCollage,['colors_',fname,'.tif']);
+%         imwrite(GrayCollage,['grays_',fname,'.tif']); 
+%         disp([fname,' images saved.']);
+        imwrite(Flimage755,['flim755_',fname,'_',num2str(flimScaleMin),'-',num2str(flimScaleMax),'.tif']);  
+            disp(['flim_',fname,'.tif',' saved.']);
+%         imwrite(Flimage860,['flim860_',fname,'_',num2str(flimScaleMin_F),'-',num2str(flimScaleMax_F),'.tif']);  
 %             disp(['flim_',fname,'.tif',' saved.']);
-%         imwrite(Flimage860,['flim860_',fname,'_',num2str(FlimScaleMin_F),'-',num2str(FlimScaleMax_F),'.tif']);  
-%             disp(['flim_',fname,'.tif',' saved.']);
-%         imwrite(redox2,['redox_',fname,'.tif']);  disp(['redox_',fname,'.tif',' saved.']);
-        imwrite(Segments,cmp,['segments_',fname,'.tif']);
+        imwrite(Redox2,['redox_',fname,'.tif']);  disp(['redox_',fname,'.tif',' saved.']);
+%         imwrite(Segments,cmp,['segments_',fname,'.tif']);
 %         imwrite(real(CellMask),['mask_',fname,'_',num2str(tweak),'.tif']); disp(['mask_',fname,'.tif',' saved.']);
     end %if saveImages
     
     %% Calculate mean values
     if saveData
-        MeanTauM(m) = sum(sum(CellMask.*TauM)) ./ sum(sum(CellMask));
-        MeanA1(m) = sum(sum(CellMask.*A1)) ./ sum(sum(CellMask));
-        MeanTau1(m) = sum(sum(CellMask.*Tau1)) ./ sum(sum(CellMask));
-        MeanA2(m) =  sum(sum(CellMask.*A2)) ./ sum(sum(CellMask));
-        MeanTau2(m) = sum(sum(CellMask.*Tau2)) ./ sum(sum(CellMask));
-        MeanA1overA2(m) = sum(sum(CellMask.*A1overA2)) ./ sum(sum(CellMask));
-        MeanTau2overTau1(m) = sum(sum(CellMask.*Tau2overTau1)) ./ sum(sum(CellMask));
+        CellArea(m) = sum(CellMask(:));
+        Mean755(m) = sum(Int755(CellMask)) / CellArea(m);
+        Mean860(m) = sum(Int860(CellMask)) / CellArea(m);
+        MeanRedox(m) = Mean860(m)/(Mean755(m)+Mean860(m));
+        MeanTauM(m) = sum(TauM(CellMask)) / CellArea(m);
+        MeanA1(m) = sum(A1(CellMask)) / CellArea(m);
+        MeanTau1(m) = sum(Tau1(CellMask)) / CellArea(m);
+        MeanA2(m) =  sum(A2(CellMask)) / CellArea(m);
+        MeanTau2(m) = sum(Tau2(CellMask)) / CellArea(m);
+        MeanA1overA2(m) = sum(A1overA2(CellMask)) / CellArea(m);
+        MeanTau2overTau1(m) = sum(Tau2overTau1(CellMask)) / CellArea(m);
 
-%     MeanTauM_L(m) = sum(sum(LipidMask.*TauM)) ./ sum(sum(LipidMask));
-%     MeanA1_L(m) = sum(sum(LipidMask.*A1)) ./ sum(sum(LipidMask));
-%     MeanTau1_L(m) = sum(sum(LipidMask.*Tau1)) ./ sum(sum(LipidMask));
-%     MeanA2_L(m) =  sum(sum(LipidMask.*A2)) ./ sum(sum(LipidMask));
-%     MeanTau2_L(m) = sum(sum(LipidMask.*Tau2)) ./ sum(sum(LipidMask));
-%     MeanA1overA2_L(m) = sum(sum(LipidMask.*A1overA2)) ./ sum(sum(LipidMask));
-%     MeanTau2overTau1_L(m) = sum(sum(LipidMask.*Tau2overTau1)) ./ sum(sum(LipidMask));
+        LipidArea(m) = sum(LipidMask(:));
+        Mean755_L(m) = sum(Int755(LipidMask)) / LipidArea(m);
+        MeanTauM_L(m) = sum(TauM(LipidMask)) / LipidArea(m);
+        MeanA1_L(m) = sum(A1(LipidMask)) / LipidArea(m);
+        MeanTau1_L(m) = sum(Tau1(LipidMask)) / LipidArea(m);
+        MeanA2_L(m) =  sum(A2(LipidMask)) / LipidArea(m);
+        MeanTau2_L(m) = sum(Tau2(LipidMask)) / LipidArea(m);
+        MeanA1overA2_L(m) = sum(A1overA2(LipidMask)) / LipidArea(m);
+        MeanTau2overTau1_L(m) = sum(Tau2overTau1(LipidMask)) / LipidArea(m);
 
 %     MeanTauM_F(m) = sum(sum(CellMask.*TauM)) ./ sum(sum(CellMask));
 %     MeanA1_F(m) = sum(sum(CellMask.*A1)) ./ sum(sum(CellMask));
@@ -201,10 +219,6 @@ for m = 1:listLength
 %     MeanTau2_F(m) = sum(sum(CellMask.*Tau2)) ./ sum(sum(CellMask));
 %     MeanA1overA2_F(m) = sum(sum(CellMask.*A1overA2)) ./ sum(sum(CellMask));
 %     MeanTau2overTau1_F(m) = sum(sum(CellMask.*Tau2overTau1)) ./ sum(sum(CellMask));    
-     
-    %% Calculate mean redox values
-        MeanRedox(m) = sum(Int860(CellMask))./sum((Int860(CellMask)+Int755(CellMask)));
-%     CellLabel{m} = cellType;
     end %if saveData
     
 end %for  m = 1:listLength
@@ -216,24 +230,28 @@ end %for  m = 1:listLength
 %% Writes to .xlsx file
 if saveData
     % Initialize output data file with header
-%     Header = {'cell','treatment','slide','field', ...
-%         'Redox','NADH Threshold','FAD Threshold',...
-%         'TauM','A1','Tau1','A2','Tau2','A1/A2','Tau2/Tau1', ...
-%         'TauM lipid','A1 lipid','Tau1 lipid','A2 lipid','Tau2 lipid','A1/A2 lipid','Tau2/Tau1 lipid',...
-%         'TauM FAD','A1 FAD','Tau1 FAD','A2 FAD','Tau2 FAD','A1/A2 FAD','Tau2/Tau1 FAD' ...
-%         };
-%     
-%     % Concatenate data columns
-%     DataPack = horzcat(MeanRedox,Threshold,Threshold_F, ...
-%         MeanTauM,MeanA1,MeanTau1,MeanA2,MeanTau2,MeanA1overA2,MeanTau2overTau1, ...
-%         MeanTauM_L,MeanA1_L,MeanTau1_L,MeanA2_L,MeanTau2_L,MeanA1overA2_L,MeanTau2overTau1_L, ...
-%         MeanTauM_F,MeanA1_F,MeanTau1_F,MeanA2_F,MeanTau2_F,MeanA1overA2_F,MeanTau2overTau1_F); 
-%     DataPack = horzcat(RunList(:,1:4),num2cell(DataPack));
+    Header = {'mouse','tissue','sample','field'...
+        ,'Redox','Cyto Area','Lipid Area','Cyto/Lipid ratio'...
+        ,'TauM','A1','Tau1','A2','Tau2','A1/A2','Tau2/Tau1'...
+        ,'TauM lipid','A1 lipid','Tau1 lipid','A2 lipid','Tau2 lipid','A1/A2 lipid','Tau2/Tau1 lipid'...
+        ,'Mean NADH Int','Mean Lipid Int','Cyto/Lipid Int ratio','Mean FAD Int'...
+        ,'NADH Threshold','FAD Threshold','SHG Threshold'...
+        };
+%         ,'TauM FAD','A1 FAD','Tau1 FAD','A2 FAD','Tau2 FAD','A1/A2 FAD','Tau2/Tau1 FAD'...
     
+    % Concatenate data columns
+    DataPack = horzcat(MeanRedox,CellArea,LipidArea,CellArea./LipidArea ...
+        ,MeanTauM,MeanA1,MeanTau1,MeanA2,MeanTau2,MeanA1overA2,MeanTau2overTau1 ...
+        ,MeanTauM_L,MeanA1_L,MeanTau1_L,MeanA2_L,MeanTau2_L,MeanA1overA2_L,MeanTau2overTau1_L ...
+        ,Mean755,Mean755_L,Mean755./Mean755_L,Mean860 ...
+        ,NADHThreshold,FADThreshold,SHGThreshold ...
+        ); 
+%         ,MeanTauM_F,MeanA1_F,MeanTau1_F,MeanA2_F,MeanTau2_F,MeanA1overA2_F,MeanTau2overTau1_F,...
+
+    DataPack = horzcat(RunList(:,1:4),num2cell(DataPack));
     DataPack = vertcat(Header,DataPack);
     xlswrite(['redox-flim_',dataGroup,'.xlsx'],DataPack);
     disp(['Mean values saved to ', 'redox-flim_',dataGroup,'.xlsx']);
 end %if saveData
 
-fclose('all');
 disp('DONE!');

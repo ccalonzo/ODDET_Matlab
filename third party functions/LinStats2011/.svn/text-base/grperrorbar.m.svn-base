@@ -1,0 +1,82 @@
+function [h u] = grperrorbar( x, y, ci, varargin)
+%
+% 
+% [h u ] = grpplot( x, y, varargin)
+% h is a vector of handles to all points of smallest group
+% u is a matrix of how the handles are grouped. There are k columns, one
+% for each factor. use each column in a call to line_themes to set the
+% properties for each level of that fator
+
+newplot;
+if nargin < 4
+    u = [];
+    h = errorbar(x,y,ci, 'o','markerfacecolor', 'g');
+    return;
+end
+
+[ai an] = grp2ind( varargin{:} );
+[u i j] = unique(ai,'rows');
+if size(ai,2) == 1
+    an = {an};
+end
+u = ind2grp( u, an{:} );
+
+% if isvector(x)
+%     x = x(:);
+%     if size(y,2) > 1
+%         x = repmat(x,size(y,2));
+%     end
+% end
+
+
+% this isn't quite right. Staggering the error bars along the x-axis 
+% must take into account the number of groups at each point along the
+% x-axis. Otherwise, as in the case of immune_cell_profile, there may be 10
+% groups, but only one group per point on the x-axis
+% set stagger true if there are multiple points for a given x will be displayed in 
+% different groups. 
+% use jitter(...'stagger', 'grp');
+xstagger = crosstab( x, j );
+stagger = any( sum(xstagger, 2) > 1 );
+stagger = false;
+
+hold on;
+b = (length(i)-1)/2;
+bmp = (-b:b)*(.07*b);
+
+for k = 1:length(i)
+    if stagger 
+        h(:,k) = errorbar( x(j==k,:)+bmp(k), y(j==k,:), ci(j==k,:), 'marker', '.' );
+    else
+        h(:,k) = errorbar( x(j==k,:), y(j==k,:), ci(j==k,:), 'marker', '.' );
+    end
+end
+
+grps.h = h;
+grps.x = Vars( u{:} );
+set(gcf,'userdata', grps );
+
+userdata = { 'gscatter', x, y, grps };
+set(gca, 'userdata', userdata );
+
+% createAttributeMenus(gca)
+
+% line_themes(h, [], 'linestyle', 'none' );
+
+
+
+function v = createAttributeMenus( v, ai, an )
+if  isempty(get(v,'UIContextMenu')) || ~ishandle( get(v, 'UIContextMenu') )
+    amenu = uicontextmenu;
+    
+    set(amenu,'tag', 'AttributeContextMenu');
+    uimenu( cmenu, 'label', 'fill color', callback', @moveCluster );
+    uimenu( cmenu, 'label', 'shape'   );
+    uimenu( cmenu, 'label', 'line style', 'callback', @deleteCluster_Callback);
+    uimenu( cmenu, 'label', 'line color', 'callback', @nameCluster_Callback); 
+    uimenu( cmenu, 'label', 'size' );
+    
+    v.attributeMenus = cmenu;
+end
+
+

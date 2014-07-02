@@ -1,0 +1,86 @@
+function [ph lh] = color_themes(h,g,varargin)
+%color_themes adds markers and colors to lines in the current axes
+% 
+%
+%usage:
+% color_themes      - finds and colors the lines
+% color_themes(h,g) - colors the lines given by handles h and colors
+%      them groups in g
+% color_themes(h,g,varargin)
+%
+%[ph lh] = color_themes(h,g,varargin)
+%   returns handles to the plot and the legend
+
+if nargin == 0
+        h = findobj(gca,'type', 'line');
+end
+
+h = h(:);
+
+if nargin == 1 || isempty(g)
+    p = length(h);
+    gj = (1:p)';
+    gi = gj;
+else
+    [gn gi gj] = unique(g);
+    p = length(gn);
+end
+
+P = inputParser;
+P.addParamValue( 'marker', 'osdv^<>ph', @ischar );
+P.addParamValue( 'linestyle', {'-', '-.', ':', '--'}, @(x) (iscellstr(x)||ischar(x)) );
+P.addParamValue( 'facecolor', colorfulcube(p) );
+P.addParamValue( 'linecolor', .5*colorfulcube(p) );
+P.addParamValue( 'legend', 'off', @(x) ismember( x, {'on', 'off'}) );
+P.parse(varargin{:});
+
+
+m = P.Results.marker;
+if strcmp(m,'none');
+    m = 'none';
+    maxm = 1;
+else
+    m = m(:);
+    maxm = length(m);    
+end
+
+mc = P.Results.facecolor;
+lc = P.Results.linecolor;
+ls = P.Results.linestyle;
+
+if ischar(ls)
+    ls = {ls};
+end
+maxl = length(ls);
+
+
+for i = 1:p
+    
+    j = 1+mod(i-1,maxm);
+    k = 1+mod(i-1,maxl);
+
+    hh = h(gj==i,:);
+%     if ~isempty( m )
+%         set(hh, 'marker', m(j,:) );
+%     end
+    
+    if ~isempty( mc )
+      set(hh, 'markerfacecolor', mc(i,:));
+    end
+    
+    if ~isempty( lc )
+        set(hh, 'color', lc(i,:) );
+    end
+    
+%     if ~isempty( ls )
+%         set(hh, 'linestyle', ls{k} );
+%     end
+end
+
+ph = h(gi);
+if strcmp(P.Results.legend, 'on')
+    if isnumeric(gn)
+        gn = num2str(gn);
+    end
+    lh = legend( h(gi), gn );
+end

@@ -6,8 +6,8 @@ dataGroup = '20140610_adipo2D';
 
 %% Execution switches
 saveImages = false;
-displayImages = true;
-saveData = false;
+displayImages = false;
+saveData = true;
 
 %% Assign some constants for image rendering
 flimScaleMin = 500;
@@ -65,10 +65,10 @@ for m = 1:listLength
     CellMask = antiSmall(NADHMask & FADMask, 10);
     LipidMask = NADHMask & ~FADMask;
     
-    %% Label cells
-    CC = bwconncomp(CellMask);
-    CellLabels = labelmatrix(CC);
-    
+%     %% Label cells
+%     CC = bwconncomp(CellMask);
+%     CellLabels = labelmatrix(CC);
+%     
     %% Normalize by laser power
     Int755 = Int755/power755^2;
     Int860 = Int860/power860^2;    
@@ -96,26 +96,15 @@ for m = 1:listLength
     % SPCImage software
     
     
-    %% Segmented image
-   Flimage2 = prettyFlim(TauM,Int755,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
-   Redox2 = prettyRedox(Redox,(Int755+Int860),'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
-%    Segments = uint8(CellMask)+uint8(2*LipidMask);
-   Segments = uint8(CellMask);
-   cmp = [0 0 0; 0.8 0.8 0; 0 0.2 1; 0.5 0.2 1];
-    
-    %% Calculate mean values
-    CellArea(m) = sum(CellMask(:));
-    Mean755(m) = sum(sum(Int755.*CellMask)) / CellArea(m);
-    Mean860(m) = sum(sum(Int860.*CellMask)) / CellArea(m);
-    MeanRedox(m) = Mean860(m)/(Mean755(m)+Mean860(m));
-    MeanTauM(m) = sum(sum(CellMask.*TauM)) / CellArea(m);
-    MeanA1(m) = sum(sum(CellMask.*A1)) / CellArea(m);
-    MeanTau1(m) = sum(sum(CellMask.*Tau1)) / CellArea(m);
-    MeanA2(m) =  sum(sum(CellMask.*A2)) / CellArea(m);
-    MeanTau2(m) = sum(sum(CellMask.*Tau2)) / CellArea(m);
-    MeanA1overA2(m) = sum(sum(CellMask.*A1overA2)) / CellArea(m);
-    MeanTau2overTau1(m) = sum(sum(CellMask.*Tau2overTau1)) / CellArea(m);
-    
+    %% Pretty images
+    if displayImages||saveImages
+        Flimage2 = prettyFlim(TauM,Int755,'none',flipud(jet(64)),flimScaleMax,flimScaleMin,bright,dark);
+        Redox2 = prettyRedox(Redox,(Int755+Int860),'none',jet(64),redoxRed,redoxBlue,redoxBright,redoxDark);
+%         Segments = uint8(CellMask)+uint8(2*LipidMask);
+        Segments = uint8(CellMask);
+        cmp = [0 0 0; 0.8 0.8 0; 0 0.2 1; 0.5 0.2 1];
+    end %if displayImages||saveImages
+        
     %% Display Images
     if displayImages
         %figure('Name',fname,'Position',[2400,200,600,600]);
@@ -140,7 +129,21 @@ for m = 1:listLength
 %         imwrite(real(CellMask),['mask_',fname,'_',num2str(tweak),'.tif']); disp(['mask_',fname,'.tif',' saved.']);
     end %if saveImages
     
-	fclose('all');
+    %% Calculate mean values
+    if saveData    
+        CellArea(m) = sum(CellMask(:));
+        Mean755(m) = sum(sum(Int755.*CellMask)) / CellArea(m);
+        Mean860(m) = sum(sum(Int860.*CellMask)) / CellArea(m);
+        MeanRedox(m) = Mean860(m)/(Mean755(m)+Mean860(m));
+        MeanTauM(m) = sum(sum(CellMask.*TauM)) / CellArea(m);
+        MeanA1(m) = sum(sum(CellMask.*A1)) / CellArea(m);
+        MeanTau1(m) = sum(sum(CellMask.*Tau1)) / CellArea(m);
+        MeanA2(m) =  sum(sum(CellMask.*A2)) / CellArea(m);
+        MeanTau2(m) = sum(sum(CellMask.*Tau2)) / CellArea(m);
+        MeanA1overA2(m) = sum(sum(CellMask.*A1overA2)) / CellArea(m);
+        MeanTau2overTau1(m) = sum(sum(CellMask.*Tau2overTau1)) / CellArea(m);
+    end %if saveData
+   
 end %for  m = 1:listLength
 
 %% Save summary of results
