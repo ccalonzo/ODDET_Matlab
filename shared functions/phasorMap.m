@@ -1,13 +1,36 @@
-function PhasorMap = phasorMap(GImage,SImage,mapResolution)
+function [PhasorMap,g,s,x1,y1,x2,y2,a,b] = phasorMap(GImage,SImage,mapResolution,calcSlope)
 % Constructs phasor disttribution map given the calculated phasor values,
 % GImage and SImage, e.g. using FlimPhasorImages.m
-%
+% Also returns the mean phasor values, g and s.
+% Optionally, calculate slope of phasor distribution and intersections with
+% universal circle: (x1,y1) and (x2,y2) = intersection, a = slope, b =
+% y-intercept
 % 20140730 CAlonzo
 
 % Default mapResolution = 256
 if nargin < 3, mapResolution = 256; end 
+if nargin < 4, calcSlope = false; end
 
+%% Accumulate phasor distribution map
 PhasorMap = hist3([SImage(:),GImage(:)],'Edges',...
     {1/mapResolution:1/mapResolution:1,1/mapResolution:1/mapResolution:1});
+
+%% Mean values
+g = mean(GImage(:));
+s = mean(SImage(:));
+
+%% Linear regression of phasor distribution
+if calcSlope
+% Apply linear fitting (ax + b) to (GImage,SImage) scatter plot.
+Coeffs = fit(reshape(GImage,[],1),reshape(SImage,[],1),'poly1');
+a = Coeffs.p1;
+b = Coeffs.p2;
+% Find intersection with Universal Circle, sqrt(0.25 - (x-0.5)^2)
+x1 = (-2*a*b + 1 + sqrt((2*a*b-1)^2 - 4*(a*a+1)*(b*b)))/(2*(a*a+1));
+x2 = (-2*a*b + 1 - sqrt((2*a*b-1)^2 - 4*(a*a+1)*(b*b)))/(2*(a*a+1));
+% extrapolate intersections
+y1 = a*x1 + b;
+y2 = a*x2 + b;
+end
 
 return

@@ -1,4 +1,4 @@
-function plotPhasorMap(PhasorMap,offset,drawCircle)
+function handle = plotPhasorMap(PhasorMap,offset,drawCircle)
 % Plot PhasorMap with jet colormap on a white background.
 % offset specifies the minimum count to include in the plot, default = 0.
 % Also optionally draws the universal circle, default is drawCircle = TRUE.
@@ -12,7 +12,7 @@ phasorRes = size(PhasorMap,1);
 
 %% Plot phasor map
 % Adjust jet colormap such that background is white
-figure;
+handle = figure;
 cmp = jet(256);
 cmp(1,:) = 1;
 colormap(cmp);
