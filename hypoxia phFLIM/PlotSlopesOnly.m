@@ -39,8 +39,8 @@ M(timePt+5) = getframe(gcf);
 end
 
 %%
-GImage = GImage_g1;
-SImage = SImage_g1;
+GImage = GImage_low;
+SImage = SImage_low;
 lineColor = 'b';
 markColor = 'b';
     
@@ -76,4 +76,4 @@ plot(x*phasorRes,(a*x+b)*phasorRes,['-',lineColor],...
 plot(g*phasorRes,s*phasorRes,['o',markColor],'MarkerFaceColor',markColor);
 axis image xy;
 
-% prettyPhasor('',max(GSmap-10,0),Gmap,Smap);
+prettyPhasor('',max(GSmap-10,0),Gmap,Smap);
