@@ -9,7 +9,7 @@ function [PhasorMap,g,s,x1,y1,x2,y2,a,b] = phasorMap(GImage,SImage,mapResolution
 
 % Default mapResolution = 256
 if nargin < 3, mapResolution = 256; end 
-if nargin < 4, calcSlope = false; end
+if (nargin < 4)&&(nargout < 3),calcSlope = false;else calcSlope = true; end
 
 %% Accumulate phasor distribution map
 PhasorMap = hist3([SImage(:),GImage(:)],'Edges',...
