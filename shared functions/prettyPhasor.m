@@ -1,7 +1,10 @@
-function [g,s,x1,x2,y1,y2,a,b] = prettyPhasor(figLabel,GSmap,Gmap,Smap)
+function [g,s,x1,x2,y1,y2,a,b] = prettyPhasor(figLabel,GSmap,Gmap,Smap,offset)
 % requires: phasorSlope.m
 
+if nargin < 5, offset = 0; end
+
 phasorRes = size(GSmap,1);
+
 
 %% Linear fit to phasor scatter
 [g s x1 y1 x2 y2 a b] = phasorSlope(Gmap,Smap);
@@ -14,7 +17,7 @@ cmp(1,:) = 1;
 colormap(cmp);
 
 % Plot GSmap 
-imagesc(GSmap); 
+imagesc(max(GSmap-offset,0)); 
 axis xy; axis image;
 
 % Draw universal circle
