@@ -1,0 +1,8 @@
+function Drawing = drawEllipse(xc,yc,a,b,phi,PreviousField)
+
+[X,Y] = meshgrid(1:size(PreviousField,1));
+ = [cos(phi) -sin(phi); sin(phi) cos(phi)]*[X(:),Y(:)];
+
+Drawing = (((X-xc)/a).^2 + ((Y-yc)/b).^2) <= 1;
+
+return
