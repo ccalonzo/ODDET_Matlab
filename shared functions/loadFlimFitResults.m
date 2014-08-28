@@ -1,4 +1,6 @@
 function [Intensity,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults(fname)
+% [Intensity,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults(fname)
+%
 % Load FLIM fit results exported from SPCImage. The working directory 
 % should contain 5 files in ASCII format following the naming convention: 
 % (e.g. fname = 'fname') fname_a1.asc, fname_a2.asc, fname_t1.asc, 

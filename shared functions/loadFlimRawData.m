@@ -1,4 +1,6 @@
 function [Fluorescence,timeInterval]=loadFlimRawData(filename,timeRes,imageRes)
+% [Fluorescence,timeInterval]=loadFlimRawData(filename,timeRes,imageRes)
+% 
 % FlimData extracts the fluorescence decay matrix from an SPCM .asc file.
 %
 % Input: 
