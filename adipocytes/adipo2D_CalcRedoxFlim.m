@@ -6,7 +6,7 @@ dataGroup = '20140912_AdipoFCCP';
 
 %% Execution switches
 saveImages = true;
-displayImages = true;
+displayImages = false;
 saveData = true;
 
 %% Assign some constants for image rendering
@@ -51,13 +51,15 @@ for m = 1:listLength
     fname = [cellType,'_t',num2str(timept),'-',num2str(well),num2str(field)];
     [Int755,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults([fname,'_ex755']);
     Int860 = loadFlimFitResults([fname,'_ex860']);
-
-%     %% Coregister
-%     [Int860] = CoRegisterNormxcorr2(Int755,Int860);
+    Int755(128,128) = 0;
+    Int860(128,128) = 0;
+        
+    %% Coregister
+    [Int860] = CoRegisterNormxcorr2(Int755,Int860);
     
     %% Create intensity threshold mask
 %     Threshold(m) = 500;  %in photon counts per pixel
-    tweak = 0.5; %tweak threshold to be more(>1) or less(<1) agressive
+    tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
     FADThreshold(m) = 100;%adaptiveThreshold(Int860)*tweak;
     FADMask = (Int860) > FADThreshold(m);
     NADHThreshold(m) = adaptiveThreshold(Int755);
@@ -112,12 +114,13 @@ for m = 1:listLength
     if displayImages
         %figure('Name',fname,'Position',[2400,200,600,600]);
         figure('Name',fname);
-        subplot(2,2,1);image(Flimage2); axis image off; title('\tau _m ');
-        subplot(2,2,2);image(Redox2); axis image off; title('Redox ');
-        subplot(2,2,3);imagesc(Pretty860); axis image off; title('FAD Intensity');
+        subplot(2,3,1);image(Flimage2); axis image off; title('\tau _m ');
+        subplot(2,3,2);image(Redox2); axis image off; title('Redox ');
+        subplot(2,3,4);imagesc(Int860); axis image off; title('FAD Intensity');
+        subplot(2,3,5);imagesc(Int755); axis image off; title('NADH Intensity');
 %         subplot(3,2,4);imagesc(Int860); axis image off; title('FAD Intensity');
         colormap(hot);
-        subplot(2,2,4);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
+        subplot(2,3,6);image(ind2rgb(Segments,cmp));axis image; axis off; title('Segments');
 %         subplot(3,2,6);imagesc(CellLabels);axis image; axis off; title('Cells');
     end %if displayImages
 
@@ -127,8 +130,8 @@ for m = 1:listLength
         imwrite(Flimage2,['flim_',fname,'_',num2str(flimScaleMin),'-',num2str(flimScaleMax),'.tif']);  disp(['flim_',fname,'.tif',' saved.']);
         imwrite(Redox2,['redox_',fname,'_',num2str(redoxBlue),'-',num2str(redoxRed),'.tif']);  disp(['redox_',fname,'.tif',' saved.']);
         imwrite(Segments,cmp,['segments_',fname,'.tif']);
-        imwrite(Pretty755,hot,['NADH_',fname,'.tif']);
-        imwrite(Pretty860,hot,['FAD_',fname,'.tif']);
+        imwrite(Pretty755,['NADH_',fname,'.tif']);
+        imwrite(Pretty860,['FAD_',fname,'.tif']);
         %imwrite(PrettyA1overA2,[fname,'_a1_a2.tif']);  disp([fname,'_a1_a2.tif saved']);
         %imwrite(PrettyA1,['a1_',fname,'.tif']);  disp(['a1_',fname,'.tif saved']);
 %         imwrite(real(CellMask),['mask_',fname,'_',num2str(tweak),'.tif']); disp(['mask_',fname,'.tif',' saved.']);

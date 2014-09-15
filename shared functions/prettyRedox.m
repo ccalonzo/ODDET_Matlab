@@ -83,7 +83,7 @@ redox=round(bitScale*(redox.*(redox>=0)))+1;
 %% Apply color map, convert to RGB, and modulate by total intensity
 imageSize=size(avgi,1);
 stackSize=size(avgi,3);
-redox2 = single(ones(imageSize,imageSize,3,stackSize));
+redox2 = ones(imageSize,imageSize,3,stackSize);
 for istack=1:stackSize    
     redox2(:,:,:,istack) = ind2rgb(redox(:,:,istack),lut);
     for k = 1:3

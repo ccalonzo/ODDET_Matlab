@@ -21,8 +21,8 @@ if bright < dark
     bright = temp;
 end
 
-%% Convert to single precision
-Gray = single(Intensity);
+%% Convert to double precision
+Gray = double(Intensity);
 
 %% Normalize and saturate stacks
 ImR=sort(reshape(nonzeros(Gray),1,[]),'descend');  %arrange intensity values in descending order

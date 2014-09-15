@@ -1,5 +1,5 @@
 %% Load results from summary data file
-[~,~,Results] = xlsread('RedoxFLIM_20140610_adipo2D.xlsx');
+[~,~,Results] = xlsread('RedoxFLIM_20140911_AdipoFCCP.xlsx');
 Header = Results(1,:);
 ResultsData = Results(2:end,:);
 clear Results;
@@ -14,17 +14,20 @@ end
 
 %% Calc stats on unfiltered dataset
 % 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2 
-colOfInterest = 5;
+colOfInterest = 6;
 QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
 [means,sd,se,grp] = grpstats(QtyOfInterest,Groups,{'mean','std','sem','gname'});
 [p_anova,~,stats] = anova1(QtyOfInterest,Groups,'off');
-figure('Name',Header{colOfInterest});multcompare(stats);
+figure('Name',Header{colOfInterest});multcompare(stats,'alpha',0.05);
 set(gcf,'Name',Header{colOfInterest});
-display(['ANOVA p-value is ', num2str(p_anova)]);
+display([Header{colOfInterest},' ANOVA p-value is ', num2str(p_anova)]);
+
+
+
 
 %% Create subset for stat analysis
 % 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2 
-colOfInterest = 6;
+colOfInterest = 9;
 QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
 % Exclude FCCP treatments
 SelectSubset = ~(strcmp('fccp5t2',Groups)|strcmp('fccp50t3',Groups)|...
