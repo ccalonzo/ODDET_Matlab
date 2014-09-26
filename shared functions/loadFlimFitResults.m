@@ -1,4 +1,4 @@
-function [Intensity,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults(fname)
+function [Intensity,TauM,A1,A2,Tau1,Tau2,Chi] = loadFlimFitResults(fname)
 % [Intensity,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults(fname)
 %
 % Load FLIM fit results exported from SPCImage. The working directory 
@@ -10,13 +10,20 @@ function [Intensity,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults(fname)
 % Mean lifetime, TauM = A1*Tau1 + A2*Tau2 is calculated. Note that A1 and
 % A2 have been normalized to ensure that A1 + A2 = 1
 % 2014-05-22 CAlonzo
+% 2014-09-18 CAlonzo
+% Optionally load chi-square results
 
 %% Load data from files
-A1 = load([fname,'_a1','.asc'],'-ascii');
-A2 = load([fname,'_a2','.asc'],'-ascii');
-Tau1 = load([fname,'_t1','.asc'],'-ascii');
-Tau2 = load([fname,'_t2','.asc'],'-ascii');
 Intensity = load([fname,'_photons','.asc'],'-ascii');
+A1 = load([fname,'_a1','.asc'],'-ascii');
+Tau1 = load([fname,'_t1','.asc'],'-ascii');
+A2 = load([fname,'_a2','.asc'],'-ascii');
+Tau2 = load([fname,'_t2','.asc'],'-ascii');
+
+if exist([fname,'_chi','.asc'],'file') == 2
+    Chi = load([fname,'_chi','.asc'],'-ascii');
+end 
+    
 
 %% Normalize A1 and A2
 Temp = A1 + A2;

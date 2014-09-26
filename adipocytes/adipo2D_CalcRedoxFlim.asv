@@ -6,7 +6,7 @@ dataGroup = '20140925_AdipoVsASC';
 
 %% Execution switches
 saveImages = true;
-displayImages = false;
+displayImages = true;
 saveData = true;
 
 %% Assign some constants for image rendering
@@ -63,7 +63,7 @@ for m = 1:listLength
     tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
     FADThreshold(m) = 100;%adaptiveThreshold(Int860)*tweak;
     FADMask = (Int860) > FADThreshold(m);
-    NADHThreshold(m) = 500;%adaptiveThreshold(Int755);
+    NADHThreshold(m) = adaptiveThreshold(Int755);
     NADHMask = (Int755) > NADHThreshold(m);
 %     CellMask = antiSmall(NADHMask & FADMask, 10);
     CellMask = FADMask ;
