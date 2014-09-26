@@ -1,18 +1,18 @@
 %% Load results from summary data file
-[~,~,Results] = xlsread('RedoxFLIM_20140916_AdipoFCCPfixedshift.xlsx');
+[~,~,Results] = xlsread('RedoxFLIM_20140925_AdipoVsASC.xlsx');
 Header = Results(1,:);
 ResultsData = Results(2:end,:);
 clear Results;
 
-%% Extract group label
+% Extract group label
 % 1 = cell, 2 = time, 3 = well, 4 = field
 countDataEntries = size(ResultsData,1);
 Groups = cell(countDataEntries,1);
 for k = 1:countDataEntries;
-    Groups{k} = [ResultsData{k,1},ResultsData{k,2}];
+    Groups{k} = [ResultsData{k,1},num2str(ResultsData{k,2})];
 end 
 
-%% Calc stats on unfiltered dataset
+% Calc stats on unfiltered dataset
 % 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2, 18 = Chi
 colOfInterest = 18;
 QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
@@ -21,38 +21,41 @@ QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
 figure('Name',Header{colOfInterest});multcompare(stats,'alpha',0.05);
 set(gcf,'Name',Header{colOfInterest});
 display([Header{colOfInterest},' ANOVA p-value is ', num2str(p_anova)]);
+figure; bar((reshape(means,7,2)));
 
-
-
-
-%% Create subset for stat analysis
-% 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2 
-colOfInterest = 9;
-QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
-% Exclude FCCP treatments
-SelectSubset = ~(strcmp('fccp5t2',Groups)|strcmp('fccp50t3',Groups)|...
-    strcmp('fccp100t3',Groups)|strcmp('adipot3',Groups));
-GroupsSubset = Groups(SelectSubset);
-QtyOfInterestSubset = QtyOfInterest(SelectSubset);
-[means,sd,se,grp] = grpstats(QtyOfInterestSubset,GroupsSubset,{'mean','std','sem','gname'});
-[p_anova,~,stats] = anova1(QtyOfInterestSubset,GroupsSubset,'off');
-figure('Name',Header{colOfInterest});multcompare(stats);
-set(gcf,'Name',Header{colOfInterest});
-display(['ANOVA p-value is ', num2str(p_anova)]);
+%% Plot bar graphs
+GroupsCellTime = {ResultsData(:,1),cell2mat(ResultsData(:,2))};
+[means,sd,se,grp] = grpstats(QtyOfInterest,GroupsCellTime,{'mean','std','sem','gname'});
 
 %% Compare FCCP treatment using anova1
 % 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2 
-colOfInterest = 6;
-QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
+% colOfInterest = 5;
+% QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
 % Select FCCP vs adipo treatments
-SelectSubset = strcmp('fccp50t3',Groups)|strcmp('adipot3',Groups);
-GroupsSubset = Groups(SelectSubset);
-QtyOfInterestSubset = QtyOfInterest(SelectSubset);
-[means,sd,se,grp] = grpstats(QtyOfInterestSubset,GroupsSubset,{'mean','std','sem','gname'});
-[p_anova,~,stats] = anova1(QtyOfInterestSubset,GroupsSubset,'off');
-figure('Name',Header{colOfInterest});multcompare(stats);
-set(gcf,'Name',Header{colOfInterest});
-display(['ANOVA p-value is ', num2str(p_anova)]);
+% SelectSubset = strcmp('fccp50t3',Groups)|strcmp('adipot3',Groups);
+% GroupsSubset = Groups(SelectSubset);
+% QtyOfInterestSubset = QtyOfInterest(SelectSubset);
+% 
+% [means,sd,se,grp] = grpstats(QtyOfInterestSubset,GroupsSubset,{'mean','std','sem','gname'});
+% [p_anova,~,stats] = anova1(QtyOfInterestSubset,GroupsSubset,'off');
+% figure('Name',Header{colOfInterest});multcompare(stats);
+% set(gcf,'Name',Header{colOfInterest});
+% display(['ANOVA p-value is ', num2str(p_anova)]);
+
+% %% Create subset for stat analysis
+% % 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2 
+% colOfInterest = 5;
+% QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
+% % Exclude FCCP treatments
+% SelectSubset = ~(strcmp('fccp5t2',Groups)|strcmp('fccp50t3',Groups)|...
+%     strcmp('fccp100t3',Groups)|strcmp('adipot3',Groups));
+% GroupsSubset = Groups(SelectSubset);
+% QtyOfInterestSubset = QtyOfInterest(SelectSubset);
+% [means,sd,se,grp] = grpstats(QtyOfInterestSubset,GroupsSubset,{'mean','std','sem','gname'});
+% [p_anova,~,stats] = anova1(QtyOfInterestSubset,GroupsSubset,'off');
+% figure('Name',Header{colOfInterest});multcompare(stats);
+% set(gcf,'Name',Header{colOfInterest});
+% display(['ANOVA p-value is ', num2str(p_anova)]);
 
 %% Compare FCCP treatment using ttest
 % 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2 

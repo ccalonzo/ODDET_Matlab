@@ -1,8 +1,8 @@
 %% Load metadata
-[~,~,RunList] = xlsread('Adipo_t0-t6.xlsx');
+[~,~,RunList] = xlsread('Adipo_t3.xlsx');
 InputHeader = RunList(1,:);
 RunList = RunList(2:end,:);
-dataGroup = '20140925_AdipoVsASC';
+dataGroup = '20140926_Adipo_t3';
 
 %% Execution switches
 saveImages = true;
@@ -61,10 +61,10 @@ for m = 1:listLength
     %% Create intensity threshold mask
 %     Threshold(m) = 500;  %in photon counts per pixel
     tweak = 1.0; %tweak threshold to be more(>1) or less(<1) agressive
-    FADThreshold(m) = 100;%adaptiveThreshold(Int860)*tweak;
-    FADMask = (Int860) > FADThreshold(m);
-    NADHThreshold(m) = 500;%adaptiveThreshold(Int755);
-    NADHMask = (Int755) > NADHThreshold(m);
+    FADThreshold(m) = adaptiveThreshold(Int860)*tweak;
+    FADMask = (Int860) > 80;%FADThreshold(m);
+    NADHThreshold(m) = adaptiveThreshold(Int755);
+    NADHMask = (Int755) > 500;%NADHThreshold(m);
 %     CellMask = antiSmall(NADHMask & FADMask, 10);
     CellMask = FADMask ;
     LipidMask = NADHMask & ~FADMask;

@@ -18,7 +18,7 @@ end
 %% Load data from files
 [Int755,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults([fieldCode,'_ex755']);
 Int860 = load([fieldCode,'_ex860_photons.asc']);
-Int860 = coRegisterNormxcorr2(Int755,Int860);
+Int860 = CoRegisterNormxcorr2(Int755,Int860);
 Redox = (Int860/power860^2) ./ (Int755/power755^2 + Int860/power860^2);
 
 
