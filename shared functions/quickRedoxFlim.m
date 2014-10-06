@@ -1,4 +1,4 @@
-function [Redox,TauM,Int755,Int860,A1,A2,Tau1,Tau2] = quickRedoxFlim(fieldCode,power755,power860,displayImages)
+function [Redox,TauM,Int755,Int860,A1,A2,Tau1,Tau2,Chi] = quickRedoxFlim(fieldCode,power755,power860,displayImages)
 % [Redox,TauM,Int755,Int860,A1,A2,Tau1,Tau2] = quickRedoxFlim(fieldCode,power755,power860)
 %
 % Quickly show FLIM and redox results for a single image field using data
@@ -16,7 +16,7 @@ if nargin < 3
 end
 
 %% Load data from files
-[Int755,TauM,A1,A2,Tau1,Tau2] = loadFlimFitResults([fieldCode,'_ex755']);
+[Int755,TauM,A1,A2,Tau1,Tau2,Chi] = loadFlimFitResults([fieldCode,'_ex755']);
 Int860 = load([fieldCode,'_ex860_photons.asc']);
 Int860 = CoRegisterNormxcorr2(Int755,Int860);
 Redox = (Int860/power860^2) ./ (Int755/power755^2 + Int860/power860^2);

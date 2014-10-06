@@ -1,5 +1,5 @@
 %% Load results from summary data file
-[~,~,Results] = xlsread('RedoxFLIM_20140925_AdipoVsASC.xlsx');
+[~,~,Results] = xlsread('RedoxFLIM_20140926_Adipo_t3.xlsx');
 Header = Results(1,:);
 ResultsData = Results(2:end,:);
 clear Results;
@@ -9,7 +9,7 @@ clear Results;
 countDataEntries = size(ResultsData,1);
 Groups = cell(countDataEntries,1);
 for k = 1:countDataEntries;
-    Groups{k} = [ResultsData{k,1},num2str(ResultsData{k,2})];
+    Groups{k} = [ResultsData{k,1},'_wk',num2str(ResultsData{k,2})];
 end 
 
 % Calc stats on unfiltered dataset
@@ -21,7 +21,15 @@ QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
 figure('Name',Header{colOfInterest});multcompare(stats,'alpha',0.05);
 set(gcf,'Name',Header{colOfInterest});
 display([Header{colOfInterest},' ANOVA p-value is ', num2str(p_anova)]);
-figure; bar((reshape(means,7,2)));
+
+figure; barWithErrors(means,sd);
+set(gca,'XTickLabel',grp);
+set(gca,'FontSize',12);
+
+ylabel(Header{colOfInterest}); 
+% figure; barWithErrors(reshape(means,7,2),reshape(sd,7,2),[0:6]');
+% ylabel(Header{colOfInterest}); 
+% xlabel('time (weeks)');
 
 %% Plot bar graphs
 GroupsCellTime = {ResultsData(:,1),cell2mat(ResultsData(:,2))};
