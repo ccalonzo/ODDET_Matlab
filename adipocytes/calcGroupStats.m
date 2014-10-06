@@ -1,5 +1,5 @@
 %% Load results from summary data file
-[~,~,Results] = xlsread('RedoxFLIM_20140926_Adipo_t3.xlsx');
+[~,~,Results] = xlsread('RedoxFLIM_20141006_Adipo_t3.xlsx');
 Header = Results(1,:);
 ResultsData = Results(2:end,:);
 clear Results;
@@ -14,7 +14,7 @@ end
 
 % Calc stats on unfiltered dataset
 % 5 = redox, 6 = TauM, 7 = A1, 8 = Tau1, 9 = A2, 10 = Tau2, 18 = Chi
-colOfInterest = 18;
+colOfInterest = 6;
 QtyOfInterest = cell2mat(ResultsData(:,colOfInterest));
 [means,sd,se,grp] = grpstats(QtyOfInterest,Groups,{'mean','std','sem','gname'});
 [p_anova,~,stats] = anova1(QtyOfInterest,Groups,'off');

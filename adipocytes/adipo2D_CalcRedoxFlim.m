@@ -2,7 +2,7 @@
 [~,~,RunList] = xlsread('Adipo_t3.xlsx');
 InputHeader = RunList(1,:);
 RunList = RunList(2:end,:);
-dataGroup = '20140926_Adipo_t3';
+dataGroup = '20141006_Adipo_t3';
 
 %% Execution switches
 saveImages = true;
@@ -50,7 +50,7 @@ for m = 1:listLength
 
     %% Load image files
     fname = [cellType,'_t',num2str(timept),'-',num2str(well),num2str(field)];
-    [Int755,TauM,A1,A2,Tau1,Tau2,Chi] = loadFlimFitResults([fname,'_ex755']);
+    [Int755,TauM,A1,A2,Tau1,Tau2,Chi,A3,Tau3] = loadFlimFitResults([fname,'_ex755']);
     Int860 = loadFlimFitResults([fname,'_ex860']);
     Int755(128,128) = 0;
     Int860(128,128) = 0;
