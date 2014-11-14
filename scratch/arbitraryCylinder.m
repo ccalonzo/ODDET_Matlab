@@ -4,11 +4,11 @@
 Slate = zeros(256,256,256);
 Sketch = zeros(256,256,256);
 
-phiDegrees = 45;
-thetaDegrees = 90;
+phiDegrees = 60;
+thetaDegrees = 45;
 radius = 16;
 x1 = 128;
-y1 = 1;
+y1 = 128;
 
 phi = degtorad(phiDegrees);
 theta = degtorad(thetaDegrees);
@@ -22,7 +22,7 @@ for k = 1:size(Slate,3)
 end
 %%
 
-imagesc(squeeze(Sketch(:,:,1))); axis xy image off;
+% imagesc(squeeze(Sketch(:,:,1))); axis xy image off;
 %%
 implay(Sketch);
 

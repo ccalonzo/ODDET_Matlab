@@ -14,25 +14,31 @@ function [Intensity,TauM,A1,A2,Tau1,Tau2,Chi,A3,Tau3] = loadFlimFitResults(fname
 % Optionally load chi-square results
 % 2014-10-06 CAlonzo
 % Modified to accept tri-exponential results
+% 2014-10-09 CAlonzo
+% Modified to accept mono-exponential results
 
 %% Load data from files
 Intensity = load([fname,'_photons','.asc'],'-ascii');
+
 A1 = load([fname,'_a1','.asc'],'-ascii');
 Tau1 = load([fname,'_t1','.asc'],'-ascii');
-A2 = load([fname,'_a2','.asc'],'-ascii');
-Tau2 = load([fname,'_t2','.asc'],'-ascii');
+components = 1;
+
+if exist([fname,'_a2','.asc'],'file') == 2
+    A2 = load([fname,'_a2','.asc'],'-ascii');
+    Tau2 = load([fname,'_t2','.asc'],'-ascii');
+    components = 2;
+
+    if exist([fname,'_a3','.asc'],'file') == 2
+        A3 = load([fname,'_a3','.asc'],'-ascii');
+        Tau3 = load([fname,'_t3','.asc'],'-ascii');
+        components = 3;
+    end
+end
 
 if exist([fname,'_chi','.asc'],'file') == 2
     Chi = load([fname,'_chi','.asc'],'-ascii');
 end 
-
-if exist([fname,'_a3','.asc'],'file') == 2
-    A3 = load([fname,'_a3','.asc'],'-ascii');
-    Tau3 = load([fname,'_t3','.asc'],'-ascii');
-    components = 3;
-else
-    components = 2;
-end
     
 %% Normalize A1 and A2
 if components == 3
@@ -46,7 +52,7 @@ if components == 3
 
     TauM = A1.*Tau1 + A2.*Tau2 + A3.*Tau3;
 
-else
+elseif components == 2
     Temp = A1 + A2;
     A1 = A1./Temp;
     A1(isnan(A1)) = 0;
@@ -54,6 +60,9 @@ else
     A2(isnan(A2)) = 0;
 
     TauM = A1.*Tau1 + A2.*Tau2;
+
+else
+    TauM = Tau1;
 end
 
 return
