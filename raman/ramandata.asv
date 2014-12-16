@@ -1,11 +1,12 @@
-sname = 'wtsub-1';
+sname = 'wtbat-41';
+% sname = 'wtepi-21';
 NormIsolatedSpectra = zeros(1340,4);
 NormTissueSpectra = zeros(1340,4);
 NormLipidSpectra = zeros(1340,4);
 NormNotLipidSpectra = zeros(1340,4);
 
 for k = 1:4
-
+%%
 fname = [sname,num2str(k),'.dat'];
 RawData = load(fname,'ascii');
 Axis = (RawData(1,:))';
