@@ -1,4 +1,12 @@
-function pointSpectra(RamanImages,Axis)
+function pointSpectra(RamanImages,Axis,SLimits)
+
+if nargin < 3
+    yMin = min(mean(mean(RamanImages,1),2));
+    yMax = max(mean(mean(RamanImages,1),2));
+    xMin = 0;
+    xMax = max(Axis);
+    SLimits = [xMin xMax 0.5*yMin 1.5*yMax];
+end
 
 PrettyImage = prettyGray(RamanImages(:,:,1000));
 %%
@@ -11,8 +19,8 @@ set(gca,'nextplot','replacechildren');
 %%
 subplot(1,2,2);
 S1 = plot(Axis,squeeze(RamanImages(1,1,:)));
-L1 = line([1440 1440],[0 1500],'Color','r');
-axis([0 1800 600 1500]);
+L1 = line([1440 1440],[0 SLimits(4)],'Color','r');
+axis(SLimits);
 G3 = gca;
 set(gca,'nextplot','replacechildren');
 %%
